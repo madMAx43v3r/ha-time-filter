@@ -1,0 +1,9 @@
+{
+    "domain": "time_filter",
+    "name": "Time Filter Sensors (time correct)",
+    "version": "0.1.0",
+    "documentation": "https://github.com/madMAx43v3r/ha-time-filter",
+    "requirements": [],
+    "codeowners": ["@madMAx43v3r"],
+    "iot_class": "local_polling"
+}
