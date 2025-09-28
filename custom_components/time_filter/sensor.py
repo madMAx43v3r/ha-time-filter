@@ -198,17 +198,22 @@ class TickFilterSensor(SensorEntity, RestoreEntity):
         scale = 1.0
         dst_unit = self._attr_native_unit_of_measurement
         src_unit = new_state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
-        if src_unit == dst_unit:
-            self._attr_state_class = new_state.attributes.get("state_class")
-            self._attr_device_class = new_state.attributes.get("device_class")
-        else:
-            if self._method == METHOD_INTEGRATOR:
-                if src_unit in ("W", "kW"):
-                    self._attr_device_class = "energy"
-            if src_unit + 'h' == dst_unit:
-                scale = 3600.0
-            elif 'k' + src_unit + 'h' == dst_unit:
-                scale = 3600000.0
+        if dst_unit is None:
+            if self._method != METHOD_INTEGRATOR:
+                dst_unit = src_unit
+                self._attr_native_unit_of_measurement = dst_unit
+        if src_unit is not None and dst_unit is not None:
+            if src_unit == dst_unit:
+                self._attr_state_class = new_state.attributes.get("state_class")
+                self._attr_device_class = new_state.attributes.get("device_class")
+            else:
+                if self._method == METHOD_INTEGRATOR:
+                    if src_unit in ("W", "kW"):
+                        self._attr_device_class = "energy"
+                if src_unit + 'h' == dst_unit:
+                    scale = 3600.0
+                elif 'k' + src_unit + 'h' == dst_unit:
+                    scale = 3600000.0
         # Parse new input value
         try:
             x = float(new_state.state) / scale
