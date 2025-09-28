@@ -5,32 +5,23 @@ Time based filters for HA that work correctly
 ```
 sensor:
   - platform: time_filter
-    name: "Load Power (EMA 30s, hybrid)"
-    source: sensor.victora_load_power
-    method: ema
-    tau_seconds: 30
-    dt_seconds: 5
-    fallback_timeout_seconds: 30   # update on change; else tick after 30s
-    unit_of_measurement: W
-    round: 1
-    emit_every_tick: true
+    name: "Load Power (Lowpass 30s)"
+    source: sensor.victor_load_power
+    method: lowpass
+    tau_s: 30       # filter parameter (sec)
+    update_s: 30    # update on change; else tick after ~30s
 
   - platform: time_filter
     name: "Grid Import Energy (Integrator)"
-    source: sensor.victorb_grid_power
+    source: sensor.victor_grid_power   # unit W or kW
     method: integrator
-    dt_seconds: 10
-    unit_of_measurement: "W·s"  # or convert downstream to Wh/kWh
-    round: 2
-    emit_every_tick: true
+    update_s: 60    # update on change; else tick after ~60s
+    unit_of_measurement: "kWh"
 
   - platform: time_filter
     name: "PV Power (Time SMA 60s)"
-    source: sensor.victora_pv_power
+    source: sensor.victor_pv_power
     method: time_sma
-    window_seconds: 60
-    dt_seconds: 5
-    unit_of_measurement: W
-    round: 1
-    emit_every_tick: true
+    window_s: 60    # window size (sec)
+    update_s: 10    # update on change; else tick after ~10s
 ```
