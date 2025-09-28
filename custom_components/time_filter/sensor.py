@@ -194,16 +194,20 @@ class TickFilterSensor(SensorEntity, RestoreEntity):
         # Update last source event time
         now_s = datetime.now(timezone.utc).timestamp()
         self._last_src_ts = now_s
-        # Set unit and scaling
-        scale = 1.0
+        # Auto assign unit if not set
         dst_unit = self._attr_native_unit_of_measurement
         src_unit = new_state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
-        if dst_unit is None:
-            if self._method != METHOD_INTEGRATOR:
+        if dst_unit is None and src_unit is not None:
+            if self._method == METHOD_INTEGRATOR:
+                dst_unit = src_unit + 'h'
+            else:
                 dst_unit = src_unit
-                self._attr_native_unit_of_measurement = dst_unit
+            self._attr_native_unit_of_measurement = dst_unit
+        # Determine scaling if units differ
+        scale = 1.0
         if src_unit is not None and dst_unit is not None:
             if src_unit == dst_unit:
+                # Copy device/state class from source
                 self._attr_state_class = new_state.attributes.get("state_class")
                 self._attr_device_class = new_state.attributes.get("device_class")
             else:
