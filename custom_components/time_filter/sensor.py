@@ -1,5 +1,4 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Deque
 from collections import deque
@@ -156,7 +155,7 @@ class TickFilterSensor(SensorEntity, RestoreEntity):
         else:
             raise ValueError(f"Unsupported method {method}")
         self._last_ts = datetime.now(timezone.utc).timestamp()
-        self._last_src_ts: Optional[float] = None   # timestamp of last source state
+        self._last_src_ts = self._last_ts   # timestamp of last source state
         self._unsub = None
         self._unsub_state = None
 
@@ -170,6 +169,12 @@ class TickFilterSensor(SensorEntity, RestoreEntity):
                 self._attr_native_value = self.filter.y
             except ValueError:
                 pass
+        # Query initial source state
+        src_state = self.hass.states.get(self._source)
+        if src_state is not None:
+            await self._state_listener(
+                type("Event", (object,), {"data": {"new_state": src_state}})  # Mock event
+            )
 
         # Listen to source state changes for immediate updates
         self._unsub_state = async_track_state_change_event(self.hass, [self._source], self._state_listener)
@@ -229,7 +234,7 @@ class TickFilterSensor(SensorEntity, RestoreEntity):
     async def _async_tick(self, _now):
         now_s = datetime.now(timezone.utc).timestamp()
         # Only fallback-tick if we haven't seen a source event in update_s
-        if self._last_src_ts is not None and (now_s - self._last_src_ts) < self._update_s:
+        if (now_s - self._last_src_ts) < self._update_s:
             return
         self._update_filter(now_s, self.filter.last_x)
 
@@ -254,7 +259,7 @@ async def async_setup_platform(hass: HomeAssistant, config, async_add_entities, 
     source = config[CONF_SOURCE]
     method = config[CONF_METHOD]
     name = config.get(CONF_NAME) or f"{method} of {source}"
-    update_s=float(config.get(CONF_UPDATE_S))
+    update_s = float(config.get(CONF_UPDATE_S))
     window_s = float(config.get(CONF_WINDOW_S))
     tau_s = float(config.get(CONF_TAU_S))
     unit = config.get(ATTR_UNIT_OF_MEASUREMENT)
